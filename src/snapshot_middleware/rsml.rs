@@ -42,8 +42,14 @@ fn apply_token_tree_to_stylesheet_snapshot(
     let attributes = attributes_from_hashmap(&data.variables);
     let styled_properties = attributes_from_hashmap(&data.properties);
 
+    let priority = match data.priority {
+        Some(some_priority) => Variant::Float32(some_priority),
+        None => Variant::Float32(0.0)
+    };
+
     let properties = [
         ("Selector".into(), Variant::String(selector.to_string())),
+        ("Priority".into(), priority),
         ("Attributes".into(), attributes.into()),
         ("StyledProperties".into(), styled_properties.into())
     ];

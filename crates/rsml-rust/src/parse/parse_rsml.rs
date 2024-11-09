@@ -1,11 +1,17 @@
 // Modules -------------------------------------------------------------------------------------------
 use crate::tokenize::{RsmlTokenKind, Token};
 
-use super::{parse_field_value, Arena, VARIABLE_TOKEN_REGEX};
+use super::{parse_data_type, Arena};
 
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 
 use rbx_types::Variant;
+use regex::Regex;
+// ---------------------------------------------------------------------------------------------------
+
+
+// Globals -------------------------------------------------------------------------------------------
+pub static VARIABLE_TOKEN_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\$(.+)").unwrap());
 // ---------------------------------------------------------------------------------------------------
 
 
@@ -15,6 +21,7 @@ pub struct TokenTreeNode<'a> {
     pub properties: HashMap<&'a str, Variant>,
     pub variables: HashMap<&'a str, Variant>,
     pub rules: HashMap<&'a str, usize>,
+    pub priority: Option<f32>,
     pub parent: usize
 }
 
@@ -24,6 +31,7 @@ impl TokenTreeNode<'_> {
             properties: HashMap::new(),
             variables: HashMap::new(),
             rules: HashMap::new(),
+            priority: None,
             parent
         }
     }
@@ -62,7 +70,7 @@ pub fn parse_rsml<'a>(tokens: &'a [Token<RsmlTokenKind>]) -> Arena<TokenTreeNode
                     tokens_iter.next();
                     if let Some(next_token) = tokens_iter.next() {
                         let field_name = &token.value;
-                        let field_value = parse_field_value(&next_token.value);
+                        let field_value = parse_data_type(&next_token.value);
     
                         let current_data = arena.get_mut(current_idx).unwrap();
                         
@@ -74,6 +82,19 @@ pub fn parse_rsml<'a>(tokens: &'a [Token<RsmlTokenKind>]) -> Arena<TokenTreeNode
                                 None => current_data.properties.insert(field_name, field_value),
                             }
                         };
+                    }
+                },
+
+                RsmlTokenKind::PriorityDeclaration => {
+                    if let Some(next_token) = tokens_iter.next() {
+                        let priority_level = match &next_token.value.parse::<f32>() {
+                            Ok(parsed) => *parsed,
+                            Err(_) => 0.0
+                        };
+    
+                        let current_data = arena.get_mut(current_idx).unwrap();
+                        
+                        current_data.priority = Some(priority_level)
                     }
                 },
     

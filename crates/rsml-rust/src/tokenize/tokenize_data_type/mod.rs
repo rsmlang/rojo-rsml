@@ -16,6 +16,7 @@ pub enum FieldTokenKind {
     Tuple,
     String,
     Number,
+    MeasurementCalc,
     Boolean,
 
     ColorTailwind,
@@ -25,10 +26,10 @@ pub enum FieldTokenKind {
 
 
 // Globals -------------------------------------------------------------------------------------------
-static FIELD_VALUE_TOKEN_CONFIG: LazyLock<[TokenConfig<'static, FieldTokenKind>; 6]> = LazyLock::new(|| [
+static FIELD_VALUE_TOKEN_CONFIG: LazyLock<[TokenConfig<'static, FieldTokenKind>; 7]> = LazyLock::new(|| [
     TokenConfig {
         kind: FieldTokenKind::Tuple,
-        pattern: Regex::new(r"^[\n\t ]*([^ \n\t]*)[ \n\t]*\((.+)\)$").unwrap(),
+        pattern: Regex::new(r"^[\n\t ]*([^ \n\t]*)[ \n\t]*\((.*)\)$").unwrap(),
         next: None
     },
 
@@ -46,7 +47,13 @@ static FIELD_VALUE_TOKEN_CONFIG: LazyLock<[TokenConfig<'static, FieldTokenKind>;
 
     TokenConfig {
         kind: FieldTokenKind::Number,
-        pattern: Regex::new(r"^[\n\t ]*(\d*\.?\d+)").unwrap(),
+        pattern: Regex::new(r"^[\n\t ]*((\+|\-)?\d*\.?\d+)$").unwrap(),
+        next: None
+    },
+
+    TokenConfig {
+        kind: FieldTokenKind::MeasurementCalc,
+        pattern: Regex::new(r"^[\+\-\*/%\^(px)%\.\d) \n\t]+$").unwrap(),
         next: None
     },
 
@@ -65,7 +72,7 @@ static FIELD_VALUE_TOKEN_CONFIG: LazyLock<[TokenConfig<'static, FieldTokenKind>;
 // ---------------------------------------------------------------------------------------------------
 
 
-pub fn tokenize_field_value(field_value: &str) -> Option<(FieldTokenKind, Captures)> {
+pub fn tokenize_data_type(field_value: &str) -> Option<(FieldTokenKind, Captures)> {
     for token in FIELD_VALUE_TOKEN_CONFIG.iter() {
         if let Some(captures) = token.pattern.captures(field_value) {
             return Some((token.kind, captures))

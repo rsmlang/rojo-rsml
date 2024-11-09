@@ -10,9 +10,16 @@ use regex::Regex;
 // Structs -------------------------------------------------------------------------------------------
 #[derive(Debug, Copy, Clone)]
 pub enum RsmlTokenKind {
+    Comment,
+
     Selector,
+
     FieldDeclaration,
     FieldValue,
+
+    PriorityDeclaration,
+    PriorityValue,
+
     BracketClosed,
     Default
 }
@@ -34,8 +41,24 @@ static FIELD_DEC_NEXT_TOKENS: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 1]>
     next: Some(FIELD_DEC_EQUALS_NEXT_TOKENS.as_slice())
 }]);
 
+static PRIORITY_DEC_NEXT_TOKENS: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 1]> = LazyLock::new(|| [TokenConfig {
+    kind: RsmlTokenKind::PriorityValue,
+    pattern: Regex::new(r"^ *(\d+)").unwrap(),
+    next: Some(FIELD_DEC_EQUALS_NEXT_TOKENS.as_slice())
+}]);
 
-static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 3]> =  LazyLock::new(|| [
+static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 6]> =  LazyLock::new(|| [
+    TokenConfig {
+        kind: RsmlTokenKind::Comment,
+        pattern: Regex::new("^[\n\t ]*(\\-\\-\\[\\[(.|\n)*\\]\\])").unwrap(),
+        next: None
+    },
+    TokenConfig {
+        kind: RsmlTokenKind::Comment,
+        pattern: Regex::new("^[\n\t ]*(\\-\\-[^\n]*\n?)").unwrap(),
+        next: None
+    },
+
     TokenConfig {
         kind: RsmlTokenKind::Selector,
         pattern: Regex::new("^[\n\t ]*([^\n\t ]+)[\n\t ]*\\{").unwrap(),
@@ -46,6 +69,12 @@ static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 3]> =  Lazy
         kind: RsmlTokenKind::FieldDeclaration,
         pattern: Regex::new("^[\n\t ]*([^\n\t ]+) *=").unwrap(),
         next: Some(FIELD_DEC_NEXT_TOKENS.as_slice())
+    },
+
+    TokenConfig {
+        kind: RsmlTokenKind::PriorityDeclaration,
+        pattern: Regex::new("@priority").unwrap(),
+        next: Some(PRIORITY_DEC_NEXT_TOKENS.as_slice())
     },
 
     TokenConfig {

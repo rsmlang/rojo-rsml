@@ -2,8 +2,8 @@
 mod tokenize_rsml;
 pub use tokenize_rsml::{tokenize_rsml, RsmlTokenKind};
 
-mod tokenize_field_value;
-pub use tokenize_field_value::{tokenize_field_value, FieldTokenKind, tokenize_measurement_calc, MeasurementBroadTokenKind, MeasurementNarrowTokenKind};
+mod tokenize_data_type;
+pub use tokenize_data_type::{tokenize_data_type, FieldTokenKind, tokenize_measurement_calc, MeasurementBroadTokenKind, MeasurementNarrowTokenKind};
 
 use std::sync::LazyLock;
 

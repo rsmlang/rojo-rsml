@@ -4,11 +4,12 @@ use crate::tokenize::{tokenize_measurement_calc, MeasurementBroadTokenKind, Meas
 use std::sync::LazyLock;
 
 use enum_map::{EnumMap, enum_map};
+use rbx_types::{UDim, Variant};
 // ---------------------------------------------------------------------------------------------------
 
 
 // Globals -------------------------------------------------------------------------------------------
-static OPERATIONS_F32: LazyLock<EnumMap<MeasurementNarrowTokenKind, fn(f32, f32) -> f32>> = LazyLock::new(|| {
+static OPERATIONS: LazyLock<EnumMap<MeasurementNarrowTokenKind, fn(f32, f32) -> f32>> = LazyLock::new(|| {
     enum_map! {
         MeasurementNarrowTokenKind::OperatorAdd => add_f32,
         MeasurementNarrowTokenKind::OperatorSubtract => subtract_f32,
@@ -20,7 +21,7 @@ static OPERATIONS_F32: LazyLock<EnumMap<MeasurementNarrowTokenKind, fn(f32, f32)
     }
 });
 
-static OPERATIONS_I32: LazyLock<EnumMap<MeasurementNarrowTokenKind, fn(i32, i32) -> i32>> = LazyLock::new(|| {
+/*static OPERATIONS_I32: LazyLock<EnumMap<MeasurementNarrowTokenKind, fn(i32, i32) -> i32>> = LazyLock::new(|| {
     enum_map! {
         MeasurementNarrowTokenKind::OperatorAdd => add_i32,
         MeasurementNarrowTokenKind::OperatorSubtract => subtract_i32,
@@ -30,35 +31,46 @@ static OPERATIONS_I32: LazyLock<EnumMap<MeasurementNarrowTokenKind, fn(i32, i32)
         MeasurementNarrowTokenKind::OperatorPower => power_i32,
         _ => multiply_i32
     }
-});
+});*/
 // ---------------------------------------------------------------------------------------------------
 
 
 // Private Functions ---------------------------------------------------------------------------------
+fn will_divide_by_zero(a: f32, b: f32) -> bool {
+    if a != 0.0 && b != 0.0 { return false }
+    return true
+}
+
 fn add_f32(a: f32, b: f32) -> f32 { a + b }
 fn subtract_f32(a: f32, b: f32) -> f32 { a - b }
 fn multiply_f32(a: f32, b: f32) -> f32 { a * b }
-fn divide_f32(a: f32, b: f32) -> f32 { a / b }
+fn divide_f32(a: f32, b: f32) -> f32 {
+    if will_divide_by_zero(a, b) { return a }
+    a / b
+}
 fn power_f32(a: f32, b: f32) -> f32 { a.powf(b) }
 fn modulo_f32(a: f32, b: f32) -> f32 { a % b }
 
-fn add_i32(a: i32, b: i32) -> i32 { a + b }
-fn subtract_i32(a: i32, b: i32) -> i32 { a - b }
-fn multiply_i32(a: i32, b: i32) -> i32 { a * b }
-fn divide_i32(a: i32, b: i32) -> i32 { a / b }
-fn power_i32(a: i32, b: i32) -> i32 { a.pow(b.try_into().unwrap()) }
-fn modulo_i32(a: i32, b: i32) -> i32 { a % b }
+fn operator_is_add_or_subtract(current_operator: MeasurementNarrowTokenKind) -> bool {
+    if (
+        matches!(current_operator, MeasurementNarrowTokenKind::OperatorAdd) ||
+        matches!(current_operator, MeasurementNarrowTokenKind::OperatorSubtract)
+    ) {
+        return true
+    }
+    return false
+}
 // ---------------------------------------------------------------------------------------------------
 
 
-pub fn parse_measurement_calc(source: &str) -> (f32, i32) {
-    let (mut scale, mut offset): (f32, i32) = (0.0, 0);
+pub fn parse_measurement_calc(source: &str) -> Variant {
+    let (mut scale, mut offset): (f32, f32) = (0.0, 0.0);
 
     let tokens = tokenize_measurement_calc(&source);
     let mut tokens_iter = tokens.iter();
 
     let mut current_operator: MeasurementNarrowTokenKind = MeasurementNarrowTokenKind::OperatorAdd;
-    //let mut previous_number_type: Option<MeasurementNarrowTokenKind> = None;
+    let mut previous_number_type: MeasurementNarrowTokenKind = MeasurementNarrowTokenKind::NumberAmbiguous;
   
     while let Some(token) = tokens_iter.next() {
         if let Some(token_kind) = token.kind {
@@ -66,16 +78,13 @@ pub fn parse_measurement_calc(source: &str) -> (f32, i32) {
 
             match token_broad_kind {
                 MeasurementBroadTokenKind::Operator => {
-                    // If the current operator and this tokens operator are both either `-` or `+`
-                    // then the current operator should be changed to be `-`.
-                    // In other cases the current operator should be replaced with this tokens operator.
                     match (current_operator, token_narrow_kind) {
-                        (MeasurementNarrowTokenKind::OperatorAdd, MeasurementNarrowTokenKind::OperatorSubtract) => {
+                        (MeasurementNarrowTokenKind::OperatorSubtract, MeasurementNarrowTokenKind::OperatorAdd) => {
                             current_operator = MeasurementNarrowTokenKind::OperatorSubtract
                         },
 
-                        (MeasurementNarrowTokenKind::OperatorSubtract, MeasurementNarrowTokenKind::OperatorAdd) => {
-                            current_operator = MeasurementNarrowTokenKind::OperatorSubtract
+                        (MeasurementNarrowTokenKind::OperatorSubtract, MeasurementNarrowTokenKind::OperatorSubtract) => {
+                            current_operator = MeasurementNarrowTokenKind::OperatorAdd
                         },
 
                         _ => current_operator = token_narrow_kind
@@ -89,11 +98,22 @@ pub fn parse_measurement_calc(source: &str) -> (f32, i32) {
                         MeasurementNarrowTokenKind::NumberOffset => {
                             // Removes `px` from end and converts to i32.
                             token_value.truncate(token_value.len() - 2);
-                            let parsed_token_value = token_value.parse::<i32>().unwrap();
+                            let parsed_token_value = token_value.parse::<f32>().unwrap();
 
-                            let operation_fn = OPERATIONS_I32[current_operator];
+                            let operation_fn = OPERATIONS[current_operator];
 
-                            offset = operation_fn(offset, parsed_token_value);
+                            // Offsets can only be added or subtracted from other offsets.
+                            if operator_is_add_or_subtract(current_operator) {
+                                offset = operation_fn(offset, parsed_token_value);
+                            } else {
+                                if matches!(previous_number_type, MeasurementNarrowTokenKind::NumberOffset) {
+                                    offset = operation_fn(offset, parsed_token_value);
+                                } else {
+                                    scale = operation_fn(scale, parsed_token_value);
+                                }
+                            }
+
+                            previous_number_type = MeasurementNarrowTokenKind::NumberOffset;
                         },
 
                         MeasurementNarrowTokenKind::NumberScale => {
@@ -101,19 +121,41 @@ pub fn parse_measurement_calc(source: &str) -> (f32, i32) {
                             token_value.truncate(token_value.len() - 1);
                             let parsed_token_value = token_value.parse::<f32>().unwrap() / 100.0;
                             
+                            let operation_fn = OPERATIONS[current_operator];
 
-                            let operation_fn = OPERATIONS_F32[current_operator];
+                            // Scales can only be added or subtracted from other scales.
+                            if operator_is_add_or_subtract(current_operator) {
+                                scale = operation_fn(scale, parsed_token_value);
+                            } else {
+                                if matches!(previous_number_type, MeasurementNarrowTokenKind::NumberOffset) {
+                                    offset = operation_fn(offset, parsed_token_value);
+                                } else {
+                                    scale = operation_fn(scale, parsed_token_value);
+                                }
+                            }
 
-                            scale = operation_fn(scale, parsed_token_value);
+                            previous_number_type = MeasurementNarrowTokenKind::NumberScale;
                         },
 
                         MeasurementNarrowTokenKind::NumberAmbiguous => {
                             let parsed_token_value = token_value.parse::<f32>().unwrap();
-                            
 
-                            let operation_fn = OPERATIONS_F32[current_operator];
+                            let operation_fn = OPERATIONS[current_operator];
 
-                            scale = operation_fn(scale, parsed_token_value);
+                            // Scales can only be added or subtracted from other scales.
+                            if operator_is_add_or_subtract(current_operator) {
+                                scale = operation_fn(scale, parsed_token_value);
+                            } else {
+                                if matches!(previous_number_type, MeasurementNarrowTokenKind::NumberOffset) {
+                                    offset = operation_fn(offset, parsed_token_value);
+                                } else {
+                                    scale = operation_fn(scale, parsed_token_value);
+                                }
+                            }
+
+                            // For the purposes of previous_number_type,
+                            // NumberAmbigious is treated the same as NumberScale.
+                            previous_number_type = MeasurementNarrowTokenKind::NumberScale;
                         },
 
                         // This case is never hit as `token_kind.1` should
@@ -131,5 +173,5 @@ pub fn parse_measurement_calc(source: &str) -> (f32, i32) {
         }
     }
 
-    (scale, offset)
+    Variant::UDim(UDim::new(scale, offset as i32))
 }

@@ -1,9 +1,6 @@
 // Modules -------------------------------------------------------------------------------------------
 mod parse_measurement_calc;
-use parse_measurement_calc::parse_measurement_calc;
-
-mod parse_color3;
-use parse_color3::parse_color3;
+pub use parse_measurement_calc::parse_measurement_calc;
 
 mod parse_hex;
 use parse_hex::parse_hex;
@@ -24,7 +21,7 @@ mod parse_string;
 use parse_string::parse_string;
 use regex::Captures;
 
-use crate::tokenize::{tokenize_field_value, FieldTokenKind};
+use crate::tokenize::{tokenize_data_type, FieldTokenKind};
 
 use rbx_types::Variant;
 // ---------------------------------------------------------------------------------------------------
@@ -37,14 +34,15 @@ fn get_first_capture_as_str(captures: Captures) -> &str {
 // ---------------------------------------------------------------------------------------------------
 
 
-pub fn parse_field_value(field_value: &str) -> Variant {
-    let (kind, captures) = match tokenize_field_value(&field_value) {
+pub fn parse_data_type(field_value: &str) -> Variant {
+    let (kind, captures) = match tokenize_data_type(&field_value) {
         None => return Variant::String(field_value.to_owned()),
         Some(parsed) => parsed
     };
 
     match kind {
         FieldTokenKind::Tuple => parse_tuple(captures),
+        FieldTokenKind::MeasurementCalc => parse_measurement_calc(get_first_capture_as_str(captures)),
         FieldTokenKind::String => parse_string(get_first_capture_as_str(captures)),
         FieldTokenKind::Number => parse_number(get_first_capture_as_str(captures)),
         FieldTokenKind::Boolean => parse_bool(get_first_capture_as_str(captures)),

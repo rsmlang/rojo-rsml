@@ -1,8 +1,11 @@
-use std::{collections::HashMap, sync::LazyLock};
+// Globals -------------------------------------------------------------------------------------------
+use super::parse_hex::parse_hex;
 
 use rbx_types::Variant;
 
-use super::parse_hex::parse_hex;
+use std::{collections::HashMap, sync::LazyLock};
+// ----------------------------------------------------------------------------------------------
+
 
 // Globals -------------------------------------------------------------------------------------------
 static TAILWIND_COLORS: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
