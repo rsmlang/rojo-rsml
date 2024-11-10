@@ -21,7 +21,7 @@ pub struct TokenTreeNode<'a> {
     pub properties: HashMap<&'a str, Variant>,
     pub variables: HashMap<&'a str, Variant>,
     pub rules: HashMap<&'a str, usize>,
-    pub priority: Option<f32>,
+    pub priority: Option<i32>,
     pub parent: usize
 }
 
@@ -87,9 +87,9 @@ pub fn parse_rsml<'a>(tokens: &'a [Token<RsmlTokenKind>]) -> Arena<TokenTreeNode
 
                 RsmlTokenKind::PriorityDeclaration => {
                     if let Some(next_token) = tokens_iter.next() {
-                        let priority_level = match &next_token.value.parse::<f32>() {
+                        let priority_level = match &next_token.value.parse::<i32>() {
                             Ok(parsed) => *parsed,
-                            Err(_) => 0.0
+                            Err(_) => 0
                         };
     
                         let current_data = arena.get_mut(current_idx).unwrap();

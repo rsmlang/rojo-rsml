@@ -58741,8 +58741,8 @@
       "Tags": [],
       "Superclass": "StyleBase",
       "Properties": {
-        "Index": {
-          "Name": "Index",
+        "Priority": {
+          "Name": "Priority",
           "Scriptability": "None",
           "DataType": {
             "Value": "Int32"

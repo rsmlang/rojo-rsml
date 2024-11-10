@@ -41,6 +41,18 @@ local function addAllToPatch(patchSet, virtualInstances, id)
 end
 
 --[[
+	Used for extracting `Priority` from the properties for a StyleRule
+	as it will need to be applied after the rule has been parented.
+]]
+local function getStyleRulePriority(properties)
+	local priority = properties.Priority
+	if not priority then return nil end
+
+	properties.Priority = nil
+	return priority
+end
+
+--[[
 	Inner function that defines the core routine.
 ]]
 function reifyInner(instanceMap, virtualInstances, id, parentInstance, unappliedPatch, deferredRefs)
@@ -67,7 +79,12 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	-- Track all of the properties that we've failed to assign to this instance.
 	local unappliedProperties = {}
 
-	for propertyName, virtualValue in pairs(virtualInstance.Properties) do
+	local virtualInstanceProperties = virtualInstance.Properties
+
+	-- If the instance is a StyleRule then we need to apply its `Priority` after it is parented.
+	local priorityProperty = if virtualInstance.ClassName == "StyleRule" then getStyleRulePriority(virtualInstanceProperties) else nil
+
+	for propertyName, virtualValue in pairs(virtualInstanceProperties) do
 		-- Because refs may refer to instances that we haven't constructed yet,
 		-- we defer applying any ref properties until all instances are created.
 		if next(virtualValue) == "Ref" then
@@ -106,6 +123,21 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	end
 
 	instance.Parent = parentInstance
+
+	-- Applies StyleRule `Priority` now that it has been parented.
+	if priorityProperty then
+		local decodeSuccess, value = decodeValue(priorityProperty, instanceMap)
+		if not decodeSuccess then
+			unappliedProperties[propertyName] = virtualValue
+		
+		else
+			instance.Priority = value
+		end
+
+		-- Reinserts `Priority` into the virtual properties so nothing gets messed up.
+		virtualInstanceProperties.Priority = priorityProperty
+	end
+
 	instanceMap:insert(id, instance)
 end
 

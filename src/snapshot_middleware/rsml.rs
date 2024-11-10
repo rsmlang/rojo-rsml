@@ -43,8 +43,8 @@ fn apply_token_tree_to_stylesheet_snapshot(
     let styled_properties = attributes_from_hashmap(&data.properties);
 
     let priority = match data.priority {
-        Some(some_priority) => Variant::Float32(some_priority),
-        None => Variant::Float32(0.0)
+        Some(some_priority) => Variant::Int32(some_priority),
+        None => Variant::Int32(0)
     };
 
     let properties = [
