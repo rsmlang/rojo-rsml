@@ -1,0 +1,65 @@
+-- Apply to all four sides.
+@macro Padding (all: udim) {
+    ::UIPadding[paddingMacro] {
+        PaddingTop = $!all,
+        PaddingBottom = $!all,
+        PaddingLeft = $!all,
+        PaddingRight = $!all
+    }
+}
+
+-- Top and bottom. | Left and right.
+@macro Padding (topAndBottom: udim, leftAndRight: udim) {
+    ::UIPadding[paddingMacro] {
+        PaddingTop = $!topAndBottom,
+        PaddingBottom = $!topAndBottom,
+        PaddingLeft = $!leftAndRight,
+        PaddingRight = $!leftAndRight
+    }
+}
+
+-- Top. | Left and right. | Bottom.
+@macro Padding (top: udim, leftAndRight: udim, bottom: udim) {
+    ::UIPadding[paddingMacro] {
+        PaddingTop = $!top,
+        PaddingBottom = $!bottom,
+        PaddingLeft = $!leftAndRight,
+        PaddingRight = $!leftAndRight
+    }
+}
+
+-- Top. | Right. | Bottom. | Left.
+@macro Padding (top: udim, right: udim, bottom: udim, left: udim) {
+    ::UIPadding[paddingMacro] {
+        PaddingTop = $!top,
+        PaddingBottom = $!bottom,
+        PaddingLeft = $!left,
+        PaddingRight = $!right
+    }
+}
+
+
+
+
+
+@macro CornerRadius (radius: udim) {
+    ::UICorner[cornerRadiusMacro] {
+        CornerRadius = $!radius,
+    }
+}
+
+
+
+
+
+@macro FlexMode (mode: Enum.AutomaticSize) {
+	::UIFlexItem[flexItemMacro] {
+		FlexMode = $!mode
+	}
+}
+
+@macro FlexAlign (align: Enum.AutomaticSize) {
+	::UIFlexItem[flexItemMacro] {
+		ItemLineAlignment = $!align
+	}
+}

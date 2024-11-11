@@ -12,6 +12,8 @@ use regex::Regex;
 pub enum RsmlTokenKind {
     Comment,
 
+    MacroDeclaration,
+
     Selector,
 
     FieldDeclaration,
@@ -53,7 +55,7 @@ static PRIORITY_DEC_NEXT_TOKENS: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 
     next: Some(FIELD_DEC_EQUALS_NEXT_TOKENS.as_slice())
 }]);
 
-static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 6]> =  LazyLock::new(|| [
+static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 7]> =  LazyLock::new(|| [
     TokenConfig {
         kind: Some(RsmlTokenKind::Comment),
         pattern: Regex::new("^[\n\t ]*(\\-\\-\\[\\[(.|\n)*\\]\\])").unwrap(),
@@ -62,6 +64,12 @@ static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 6]> =  Lazy
     TokenConfig {
         kind: Some(RsmlTokenKind::Comment),
         pattern: Regex::new("^[\n\t ]*(\\-\\-[^\n]*\n?)").unwrap(),
+        next: None
+    },
+
+    TokenConfig {
+        kind: Some(RsmlTokenKind::MacroDeclaration),
+        pattern: Regex::new(r"^[\n\t ]*((@macro)[\t ]+([^\n\t ]+)[\t ]*(\((.|\n)*\))?[\t ]*\{)").unwrap(),
         next: None
     },
 
