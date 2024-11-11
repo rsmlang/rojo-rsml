@@ -40,7 +40,7 @@ pub fn parse_data_type(field_value: &str) -> Variant {
         Some(parsed) => parsed
     };
 
-    match kind {
+    match kind.unwrap() {
         FieldTokenKind::Tuple => parse_tuple(captures),
         FieldTokenKind::MeasurementCalc => parse_measurement_calc(get_first_capture_as_str(captures)),
         FieldTokenKind::String => parse_string(get_first_capture_as_str(captures)),

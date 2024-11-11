@@ -40,67 +40,67 @@ pub type MeasurementKind = (MeasurementBroadTokenKind, MeasurementNarrowTokenKin
 // Globals -------------------------------------------------------------------------------------------
 static MEASUREMENT_TOKEN_CONFIG: LazyLock<[TokenConfig<'static, MeasurementKind>; 11]> = LazyLock::new(|| [
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Number, MeasurementNarrowTokenKind::NumberScale),
+        kind: Some((MeasurementBroadTokenKind::Number, MeasurementNarrowTokenKind::NumberScale)),
         pattern: Regex::new(r"^[ \n\t]*(\d*\.?\d+%)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Number, MeasurementNarrowTokenKind::NumberOffset),
+        kind: Some((MeasurementBroadTokenKind::Number, MeasurementNarrowTokenKind::NumberOffset)),
         pattern: Regex::new(r"^[ \n\t]*(\d*\.?\d+px)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Number, MeasurementNarrowTokenKind::NumberAmbiguous),
+        kind: Some((MeasurementBroadTokenKind::Number, MeasurementNarrowTokenKind::NumberAmbiguous)),
         pattern: Regex::new(r"^[ \n\t]*(\d*\.?\d+)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorAdd),
+        kind: Some((MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorAdd)),
         pattern: Regex::new(r"^[ \n\t]*(\+)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorSubtract),
+        kind: Some((MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorSubtract)),
         pattern: Regex::new(r"^[ \n\t]*(\-)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorMultiply),
+        kind: Some((MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorMultiply)),
         pattern: Regex::new(r"^[ \n\t]*(\*)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorDivide),
+        kind: Some((MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorDivide)),
         pattern: Regex::new(r"^[ \n\t]*(/)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorModulo),
+        kind: Some((MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorModulo)),
         pattern: Regex::new(r"^[ \n\t]*(%)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorPower),
+        kind: Some((MeasurementBroadTokenKind::Operator, MeasurementNarrowTokenKind::OperatorPower)),
         pattern: Regex::new(r"^[ \n\t]*(\^)").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Bracket, MeasurementNarrowTokenKind::BracketOpen),
+        kind: Some((MeasurementBroadTokenKind::Bracket, MeasurementNarrowTokenKind::BracketOpen)),
         pattern: Regex::new(r"^[ \n\t]*(\()").unwrap(),
         next: None
     },
 
     TokenConfig {
-        kind: (MeasurementBroadTokenKind::Bracket, MeasurementNarrowTokenKind::BracketClosed),
+        kind: Some((MeasurementBroadTokenKind::Bracket, MeasurementNarrowTokenKind::BracketClosed)),
         pattern: Regex::new(r"^[ \n\t]*(\))").unwrap(),
         next: None
     },

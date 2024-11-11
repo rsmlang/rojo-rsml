@@ -14,7 +14,7 @@ use regex::Regex;
 // Structs -------------------------------------------------------------------------------------------
 #[derive(Debug)]
 pub struct TokenConfig<'a, Kind> {
-    kind: Kind,
+    kind: Option<Kind>,
     pattern: Regex,
     next: Option<&'a [TokenConfig<'a, Kind>]>,
 
@@ -55,7 +55,7 @@ fn tokenize<T>(source: &str, tokens_config: &[TokenConfig<T>]) -> Vec<Token<T>> 
                 None => continue
             };
 
-            tokens.push(Token::<T> { kind: Some(token.kind), value: found.as_str().to_owned() });
+            tokens.push(Token::<T> { kind: token.kind, value: found.as_str().to_owned() });
 
             next_token_configs = match token.next {
                 Some(next) => next,
