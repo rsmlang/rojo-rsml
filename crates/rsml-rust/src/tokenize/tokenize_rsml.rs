@@ -27,14 +27,16 @@ pub enum RsmlTokenKind {
 
 // Globals -------------------------------------------------------------------------------------------
 static FIELD_DEC_EQUALS_NEXT_TOKENS: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 2]> = LazyLock::new(|| [
+    // Tuple field values.
     TokenConfig {
         kind: Some(RsmlTokenKind::FieldValue),
-        pattern: Regex::new(r"^[\n\t ]*((.|\n)*)[;,]").unwrap(),
+        pattern: Regex::new(r"^[\n\t ]*([^ \n\t]*[ \n\t]*\((.*)\))[\n\t ]*([;,]|([\n\t ]*}))").unwrap(),
         next: None
     },
+
     TokenConfig {
         kind: Some(RsmlTokenKind::FieldValue),
-        pattern: Regex::new(r"^[\n\t ]*((.|\n)*)[\n\t ]*}").unwrap(),
+        pattern: Regex::new(r"^[\n\t ]*([^,;}]+)([;,]|([\n\t ]*}))").unwrap(),
         next: None
     },
 ]);

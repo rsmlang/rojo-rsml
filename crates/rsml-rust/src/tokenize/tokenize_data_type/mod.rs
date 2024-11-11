@@ -29,7 +29,7 @@ pub enum FieldTokenKind {
 static FIELD_VALUE_TOKEN_CONFIG: LazyLock<[TokenConfig<'static, FieldTokenKind>; 7]> = LazyLock::new(|| [
     TokenConfig {
         kind: Some(FieldTokenKind::Tuple),
-        pattern: Regex::new(r"^[\n\t ]*([^ \n\t]*)[ \n\t]*\((.*)\)$").unwrap(),
+        pattern: Regex::new(r"^[\n\t ]*([^ \n\t]*)[ \n\t]*\((.*)\)[\n\t ]*$").unwrap(),
         next: None
     },
 

@@ -57,7 +57,7 @@ fn parse_tuple_as_udim(components: Vec<Variant>) -> Variant {
     match components.get(0) {
         Some(component) => Variant::UDim(get_udim_from_variant(component)),
         None => Variant::UDim(UDim::new(0.0, 0))
-    } 
+    }
 }
 
 fn parse_tuple_as_vec2(components: Vec<Variant>) -> Variant {
