@@ -11,26 +11,52 @@ use regex::Regex;
 
 
 // Globals -------------------------------------------------------------------------------------------
+pub static ROOT_SELECTOR_NAME: LazyLock<String> = LazyLock::new(|| String::from("@:ROOT"));
+
 pub static VARIABLE_TOKEN_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\$(.+)").unwrap());
 // ---------------------------------------------------------------------------------------------------
 
 
 // Structs -------------------------------------------------------------------------------------------
 #[derive(Debug)]
-pub struct TokenTreeNode<'a> {
+pub enum TokenTreeKind {
+    Sheet,
+    Rule,
+    Macro
+}
+
+#[derive(Debug)]
+pub struct TokenTreeNodeRules<'a>(pub HashMap<&'a str, Vec<usize>>);
+
+impl<'a> TokenTreeNodeRules<'a> {
+    fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    fn insert(&mut self, selector: &'a str, node_idx: usize) {
+        let rules = self.0.entry(&selector).or_insert(vec![]);
+
+        rules.push(node_idx);
+    }
+}
+
+#[derive(Debug)]
+pub struct TokenTreeNode<'a> { 
+    pub kind: TokenTreeKind,
     pub properties: HashMap<&'a str, Variant>,
     pub variables: HashMap<&'a str, Variant>,
-    pub rules: HashMap<&'a str, usize>,
+    pub rules: TokenTreeNodeRules<'a>,
     pub priority: Option<i32>,
     pub parent: usize
 }
 
-impl TokenTreeNode<'_> {
-    fn new(parent: usize) -> Self {
-        Self {
+impl<'a> TokenTreeNode<'a> {
+    fn new(kind: TokenTreeKind, parent: usize) -> TokenTreeNode<'a> {
+        TokenTreeNode {
+            kind,
             properties: HashMap::new(),
             variables: HashMap::new(),
-            rules: HashMap::new(),
+            rules: TokenTreeNodeRules::new(),
             priority: None,
             parent
         }
@@ -40,7 +66,7 @@ impl TokenTreeNode<'_> {
 
 
 pub fn parse_rsml<'a>(tokens: &'a [Token<RsmlTokenKind>]) -> Arena<TokenTreeNode> {
-    let data: TokenTreeNode = TokenTreeNode::new(0);
+    let data: TokenTreeNode = TokenTreeNode::new(TokenTreeKind::Sheet,0);
 
     let mut arena = Arena::<TokenTreeNode>::new();
 
@@ -54,16 +80,13 @@ pub fn parse_rsml<'a>(tokens: &'a [Token<RsmlTokenKind>]) -> Arena<TokenTreeNode
                 RsmlTokenKind::Selector => {
                     let selector: &str = &token.value;
     
-                    current_idx = match arena.get(current_idx).unwrap().rules.get(selector) {
-                        Some(new_idx) => *new_idx,
-    
-                        None => {
-                            let new_idx = arena.push(TokenTreeNode::new(current_idx));
-                            arena.get_mut(current_idx).unwrap().rules.insert(&token.value, new_idx);
-    
-                            new_idx
-                        },
-                    }
+        
+                    let new_idx = arena.push(
+                        TokenTreeNode::new(TokenTreeKind::Rule,current_idx)
+                    );
+                    arena.get_mut(current_idx).unwrap().rules.insert(selector, new_idx);
+
+                    current_idx = new_idx
                 },
     
                 RsmlTokenKind::FieldDeclaration => {
@@ -83,6 +106,11 @@ pub fn parse_rsml<'a>(tokens: &'a [Token<RsmlTokenKind>]) -> Arena<TokenTreeNode
                             }
                         };
                     }
+                },
+
+                RsmlTokenKind::MacroDeclaration => {
+                    //let current_data = arena.get_mut(current_idx).unwrap();
+
                 },
 
                 RsmlTokenKind::PriorityDeclaration => {

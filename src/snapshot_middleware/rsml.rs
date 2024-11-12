@@ -28,15 +28,17 @@ fn attributes_from_hashmap(variables: &HashMap<&str, Variant>) -> Attributes {
 fn apply_token_tree_to_stylesheet_snapshot(
     mut snapshot: InstanceSnapshot, selector: &str, data: &TokenTreeNode, arena: &Arena<TokenTreeNode>
 ) -> InstanceSnapshot {
-    for (selector, child_idx) in &data.rules {
-        let mut style_rule = InstanceSnapshot::new()
+    for (selector, children) in &data.rules.0 {
+        for child_idx in children {
+            let mut style_rule = InstanceSnapshot::new()
             .class_name("StyleRule")
             .name(selector.to_owned());
 
-        let child_data = arena.get(*child_idx).unwrap();
-        style_rule = apply_token_tree_to_stylesheet_snapshot(style_rule, &selector, &child_data, &arena);
+            let child_data = arena.get(*child_idx).unwrap();
+            style_rule = apply_token_tree_to_stylesheet_snapshot(style_rule, &selector, &child_data, &arena);
 
-        snapshot.children.push(style_rule);
+            snapshot.children.push(style_rule);
+        }
     }
 
     let attributes = attributes_from_hashmap(&data.variables);
@@ -96,16 +98,18 @@ pub fn snapshot_rsml(
         ("Attributes".into(), root_attributes.into()),
     ]);
 
-    for (selector, rule_idx) in &root_node.rules {
-        let mut rule_snapshot = InstanceSnapshot::new()
+    for (selector, children) in &root_node.rules.0 {
+        for child_idx in children {
+            let mut rule_snapshot = InstanceSnapshot::new()
             .class_name("StyleRule")
             .name(selector.to_owned());
 
-        rule_snapshot = apply_token_tree_to_stylesheet_snapshot(
-            rule_snapshot, selector, &token_tree_arena.get(rule_idx.to_owned()).unwrap(), &token_tree_arena
-        );
+            rule_snapshot = apply_token_tree_to_stylesheet_snapshot(
+                rule_snapshot, selector, &token_tree_arena.get(child_idx.to_owned()).unwrap(), &token_tree_arena
+            );
 
-        snapshot.children.push(rule_snapshot);
+            snapshot.children.push(rule_snapshot);
+        }
     }
 
     Ok(Some(snapshot))

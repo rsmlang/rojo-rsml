@@ -52,7 +52,7 @@ static FIELD_DEC_NEXT_TOKENS: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 1]>
 static PRIORITY_DEC_NEXT_TOKENS: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 1]> = LazyLock::new(|| [TokenConfig {
     kind: Some(RsmlTokenKind::PriorityValue),
     pattern: Regex::new(r"^ *(\d+)[;,]").unwrap(),
-    next: Some(FIELD_DEC_EQUALS_NEXT_TOKENS.as_slice())
+    next: None
 }]);
 
 static TOKENS_CONFIG: LazyLock<[TokenConfig<'static, RsmlTokenKind>; 7]> =  LazyLock::new(|| [

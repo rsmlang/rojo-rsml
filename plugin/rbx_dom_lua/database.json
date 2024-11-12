@@ -58743,7 +58743,7 @@
       "Properties": {
         "Priority": {
           "Name": "Priority",
-          "Scriptability": "None",
+          "Scriptability": "ReadWrite",
           "DataType": {
             "Value": "Int32"
           },
