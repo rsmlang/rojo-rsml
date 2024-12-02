@@ -6,7 +6,6 @@ use colors_transform::{Rgb, Color};
 use rbx_types::{Color3, UDim, UDim2, Variant, Vector2};
 
 use std::collections::HashMap;
-use std::fmt::format;
 use std::sync::LazyLock;
 // ---------------------------------------------------------------------------------------------------
 
@@ -32,7 +31,6 @@ enum EquationDataType<'a> {
 struct TupleDataType<'a> {
     name: Option<&'a str>,
     data: Vec<DataType<'a>>,
-    position: usize,
     parent_idx: Option<usize>
 }
 
@@ -41,7 +39,6 @@ impl<'a> TupleDataType<'a> {
         Self {
             name,
             data: vec![],
-            position: 0,
             parent_idx
         }
     }
@@ -52,10 +49,6 @@ impl<'a> TupleDataType<'a> {
 
     fn get(&self, idx: usize) -> Option<&DataType<'a>> {
         self.data.get(idx)
-    }
-
-    fn get_latest(&self, idx: usize) -> Option<&DataType<'a>> {
-        self.data.get(self.data.len())
     }
 }
 
@@ -83,12 +76,12 @@ impl<'a> TokenTreeNodeMacrosHashMap<'a> {
         Self(HashMap::new())
     }
 
-    fn insert(&mut self, macro_name: &'a str, args: Option<u64>, node_idx: usize) {
+    /*fn insert(&mut self, macro_name: &'a str, args: Option<u64>, node_idx: usize) {
         let macro_hashmap = self.0.entry(macro_name).or_insert(HashMap::new());
         let args_hashmap = macro_hashmap.entry(args).or_insert(vec![]);
 
         args_hashmap.push(node_idx);
-    }
+    }*/
 }
 
 #[derive(Debug)]
@@ -712,20 +705,6 @@ fn resolve_equation_stack<'a>(stack: &mut Vec<EquationDataType<'a>>) -> DataType
                     stack[occurrence_idx] = EquationDataType::NumberOffset(operator_fn(left_value, right_value));
                 },
 
-                // If the left side doesn't have an explicit measurement type.
-                // CHANGED MY MIND ON THIS: keeping code here as I may unchange my mind :3.
-                /*EquationDataType::Number(left_value) => {
-                    match right {
-                        // If the right side has an explicit measurement type then the left side is a scale.
-                        EquationDataType::NumberOffset(right_value) | EquationDataType::NumberScale(right_value) => {
-                            stack[occurrence_idx] = EquationDataType::NumberScale(operator_fn(left_value, right_value))
-                        },
-
-                        // If the right side doesn't have an explicit measurement type then the left side is a number.
-                        _ => stack[occurrence_idx] = EquationDataType::Number(operator_fn(left_value, right_value))
-                    }
-                },*/
-
                 // If the left side doesn't have an explicit measurement type then we need to
                 // attempt to get it from the right side instead.
                 EquationDataType::Number(left_value) => match right {
@@ -862,23 +841,6 @@ fn parse_equation_tuple_data_type<'a>(
 
                         stack.push(EquationDataType::NumberOffset(udim.offset as f32));
                     }
-
-                    /*let operator = parse_equation_tuple_maybe_next_operator(stack);
-                    let mut apply_operator = false;
-
-                    if scale != 0.0 {
-                        if let Some(operator) = operator {
-                            stack.push(EquationDataType::Operator(operator));
-                        };
-                        stack.push(EquationDataType::NumberScale(udim.scale as f32));
-                    }
-
-                    if offset != 0 {
-                        if apply_operator && let Some(operator) = operator {
-                            stack.push(EquationDataType::Operator(operator));
-                        };
-                        stack.push(EquationDataType::NumberOffset(udim.offset as f32));
-                    }*/
                 },
 
                 DataType::Number(number) => {
