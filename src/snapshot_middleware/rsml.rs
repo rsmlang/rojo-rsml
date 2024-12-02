@@ -9,7 +9,7 @@ use super::meta_file::AdjacentMetadata;
 
 use rbx_dom_weak::types::{Attributes, Variant};
 
-use rbx_rsml::{tokenize_rsml, parse_rsml, Arena, TokenTreeNode};
+use rbx_rsml::{lex_rsml, parse_rsml, Arena, TokenTreeNode};
 // ---------------------------------------------------------------------------------------------------
 
 
@@ -70,7 +70,7 @@ pub fn snapshot_rsml(
     let contents = vfs.read_to_string(path)?;
     let contents_str = contents.as_str();
 
-    let tokens = tokenize_rsml(contents_str);
+    let tokens = lex_rsml(contents_str);
     let token_tree_arena = parse_rsml(&tokens);
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));

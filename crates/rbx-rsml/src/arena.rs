@@ -1,6 +1,6 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Arena<T> {
-    data: Vec<T>,
+    pub data: Vec<T>,
     size: usize,
 }
 

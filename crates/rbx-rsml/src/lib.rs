@@ -1,10 +1,12 @@
+#![feature(let_chains)]
+
 // Modules -------------------------------------------------------------------------------------------
-mod arena;
+mod lexer;
+pub use lexer::lex_rsml;
+
+mod parser;
+pub use parser::{parse_rsml, TokenTreeNode};
+
+pub mod arena;
 pub use arena::Arena;
-
-mod tokenize;
-pub use tokenize::{tokenize_rsml, tokenize_data_type};
-
-mod parse;
-pub use parse::{parse_rsml, TokenTreeNode, parse_data_type};
 // ---------------------------------------------------------------------------------------------------
