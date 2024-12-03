@@ -23,9 +23,9 @@ pub enum DataType<'a> {
     ColorTw(&'a str),
     ColorCss(&'a str),
     StringSingle(&'a str),
-    NumberOffset(f32),
-    NumberScale(f32),
-    Number(f32),
+    NumberOffset(f64),
+    NumberScale(f64),
+    Number(f64),
 
     Tuple(usize),
     UDim(UDim),
@@ -77,15 +77,15 @@ pub enum Token<'a> {
     #[regex(r"#[0-9a-fA-F]+", |lex| DataType::ColorHex(lex.slice()))]
     #[regex(r#"'([^'\n\f\r])*'"#, |lex| DataType::StringSingle(str_clip(lex.slice(), 1, 1)))]
     #[regex(r#""([^"\n\f\r])*""#, |lex| DataType::StringSingle(str_clip(lex.slice(), 1, 1)))]
-    #[regex(r"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)px", |lex| DataType::NumberOffset(match str_clip(lex.slice(), 0, 2).parse::<f32>() {
+    #[regex(r"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)px", |lex| DataType::NumberOffset(match str_clip(lex.slice(), 0, 2).parse::<f64>() {
         Ok(float) => float,
-        Err(_) => 0.0
+        Err(_) => 0.0 
     }))]
-    #[regex(r"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)%", |lex| DataType::NumberScale(match str_clip(lex.slice(), 0, 1).parse::<f32>() {
+    #[regex(r"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)%", |lex| DataType::NumberScale(match str_clip(lex.slice(), 0, 1).parse::<f64>() {
         Ok(float) => float / 100.0,
         Err(_) => 0.0
     }))]
-    #[regex(r"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)", |lex| DataType::Number(match lex.slice().parse::<f32>() {
+    #[regex(r"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)", |lex| DataType::Number(match lex.slice().parse::<f64>() {
         Ok(float) => float,
         Err(_) => 0.0
     }))]

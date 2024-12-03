@@ -26,9 +26,9 @@ const CSS_COLORS: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
 // Data ----------------------------------------------------------------------------------------------
 #[derive(Clone, Debug)]
 enum EquationDataType<'a> {
-    NumberScale(f32),
-    NumberOffset(f32),
-    Number(f32),
+    NumberScale(f64),
+    NumberOffset(f64),
+    Number(f64),
     Operator(&'a Operator),
 }
 
@@ -351,7 +351,7 @@ fn tuple_to_vec2_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
         }
     } else { component_x };
 
-    DataType::Vec2(Vector2::new(component_x, component_y))
+    DataType::Vec2(Vector2::new(component_x as f32, component_y as f32))
 }
 
 fn tuple_to_vec3_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
@@ -376,7 +376,7 @@ fn tuple_to_vec3_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
         }
     } else { 0.0 };
 
-    DataType::Vec3(Vector3::new(component_x, component_y, component_z))
+    DataType::Vec3(Vector3::new(component_x as f32, component_y as f32, component_z as f32))
 }
 
 fn tuple_to_rect_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
@@ -408,14 +408,17 @@ fn tuple_to_rect_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
         }
     } else { 0.0 };
 
-    DataType::Rect(Rect::new(Vector2::new(component_ax, component_ay), Vector2::new(component_bx, component_by)))
+    DataType::Rect(Rect::new(
+        Vector2::new(component_ax as f32, component_ay as f32),
+        Vector2::new(component_bx as f32, component_by as f32)
+    ))
 }
 
 fn tuple_to_udim2_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     let component_x = if let Some(component) = tuple.get(0) {
         match component {
             DataType::UDim(udim) => *udim,
-            DataType::Number(number) => UDim::new(*number, 0),
+            DataType::Number(number) => UDim::new(*number as f32, 0),
             _ => UDim::new(0.0, 0)
         }
     } else { UDim::new(0.0, 0) };
@@ -423,7 +426,7 @@ fn tuple_to_udim2_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     let component_y = if let Some(component) = tuple.get(1) {
         match component {
             DataType::UDim(udim) => *udim,
-            DataType::Number(number) => UDim::new(*number, 0),
+            DataType::Number(number) => UDim::new(*number as f32, 0),
             _ => component_x
         }
     } else { component_x };
@@ -437,7 +440,7 @@ fn tuple_to_color3_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
             DataType::Number(num) => *num,
             DataType::NumberScale(num) => *num,
             DataType::NumberOffset(num) => *num,
-            DataType::UDim(udim) => udim.scale,
+            DataType::UDim(udim) => udim.scale as f64,
             _ => 0.0,
         }
     } else { 0.0 };
@@ -447,7 +450,7 @@ fn tuple_to_color3_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
             DataType::Number(num) => *num,
             DataType::NumberScale(num) => *num,
             DataType::NumberOffset(num) => *num,
-            DataType::UDim(udim) => udim.scale,
+            DataType::UDim(udim) => udim.scale as f64,
             _ => 0.0,
         }
     } else { 0.0 };
@@ -457,12 +460,12 @@ fn tuple_to_color3_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
             DataType::Number(num) => *num,
             DataType::NumberScale(num) => *num,
             DataType::NumberOffset(num) => *num,
-            DataType::UDim(udim) => udim.scale,
+            DataType::UDim(udim) => udim.scale as f64,
             _ => 0.0,
         }
     } else { 0.0 };
 
-    DataType::Color3(Color3::new(component_r, component_g, component_b))
+    DataType::Color3(Color3::new(component_r as f32, component_g as f32, component_b as f32))
 }
 
 fn tuple_to_rgb_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
@@ -476,9 +479,9 @@ fn tuple_to_rgb_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
 fn tuple_to_udim_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     let udim = if let Some(component) = tuple.get(0) {
         match component {
-            DataType::Number(scale) => UDim::new(*scale, 0),
+            DataType::Number(scale) => UDim::new(*scale as f32, 0),
             DataType::UDim(udim) => *udim,
-            DataType::NumberScale(scale) => UDim::new(*scale, 0),
+            DataType::NumberScale(scale) => UDim::new(*scale as f32, 0),
             DataType::NumberOffset(offset) => UDim::new(0.0, *offset as i32),
             _ => UDim::new(0.0, 0)
         }
@@ -491,7 +494,7 @@ fn tuple_to_font_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     let font_name = if let Some(component) = tuple.get(0) {
         match component {
             DataType::StringSingle(str) => *str,
-            DataType::Number(num) => &format!("rbxasset://{}", num),
+            DataType::Number(num) => &format!("rbxassetid://{}", num),
             _ => "rbxasset://fonts/families/SourceSansPro.json"
         }
     } else { "rbxasset://fonts/families/SourceSansPro.json" };
@@ -732,21 +735,21 @@ fn parse_tuple_close<'a>(
 
 
 // Parse Data Types ----------------------------------------------------------------------------------
-fn will_divide_by_zero(a: f32, b: f32) -> bool {
+fn will_divide_by_zero(a: f64, b: f64) -> bool {
     if a != 0.0 && b != 0.0 { return false }
     return true
 }
 
-fn pos_f32(a: f32) -> f32 { a }
-fn neg_f32(a: f32) -> f32 { -a }
+fn pos_f64(a: f64) -> f64 { a }
+fn neg_f64(a: f64) -> f64 { -a }
 
-fn multiply_f32(a: f32, b: f32) -> f32 { a * b }
-fn divide_f32(a: f32, b: f32) -> f32 {
+fn multiply_f64(a: f64, b: f64) -> f64 { a * b }
+fn divide_f64(a: f64, b: f64) -> f64 {
     if will_divide_by_zero(a, b) { return a }
     a / b
 }
-fn power_f32(a: f32, b: f32) -> f32 { a.powf(b) }
-fn modulo_f32(a: f32, b: f32) -> f32 { a % b }
+fn power_f64(a: f64, b: f64) -> f64 { a.powf(b) }
+fn modulo_f64(a: f64, b: f64) -> f64 { a % b }
 
 fn operator_indexes_in_stack<'a>(stack: &Vec<EquationDataType<'a>>, operator: &Operator) -> Vec<usize> {
     let mut indexes: Vec<usize> = vec![];
@@ -766,10 +769,10 @@ fn operator_indexes_in_stack<'a>(stack: &Vec<EquationDataType<'a>>, operator: &O
 
 fn resolve_equation_stack<'a>(stack: &mut Vec<EquationDataType<'a>>) -> DataType<'a> {
     for (operator, operator_fn) in [
-        (Operator::Pow, power_f32 as fn(f32, f32) -> f32),
-        (Operator::Div, divide_f32 as fn(f32, f32) -> f32),
-        (Operator::Mod, modulo_f32 as fn(f32, f32) -> f32),
-        (Operator::Mult, multiply_f32 as fn(f32, f32) -> f32),
+        (Operator::Pow, power_f64 as fn(f64, f64) -> f64),
+        (Operator::Div, divide_f64 as fn(f64, f64) -> f64),
+        (Operator::Mod, modulo_f64 as fn(f64, f64) -> f64),
+        (Operator::Mult, multiply_f64 as fn(f64, f64) -> f64),
     ] {
         let occurrences = operator_indexes_in_stack(stack, &operator);
         let mut stack_offset: usize = 0;
@@ -836,8 +839,8 @@ fn resolve_equation_stack<'a>(stack: &mut Vec<EquationDataType<'a>>) -> DataType
     }
 
     for (operator, operator_fn) in [
-        (Operator::Plus, pos_f32 as fn(f32) -> f32),
-        (Operator::Sub, neg_f32 as fn(f32) -> f32),
+        (Operator::Plus, pos_f64 as fn(f64) -> f64),
+        (Operator::Sub, neg_f64 as fn(f64) -> f64),
     ] {
         let occurrences = operator_indexes_in_stack(stack, &operator);
         let mut stack_offset: usize = 0;
@@ -866,7 +869,7 @@ fn resolve_equation_stack<'a>(stack: &mut Vec<EquationDataType<'a>>) -> DataType
         }
     }
 
-    let (mut scale, mut offset) = (0.0_f32, 0);
+    let (mut scale, mut offset) = (0.0_f64, 0);
     let mut has_explicit_scale = false;
     let mut has_explicit_offset = false;
 
@@ -888,7 +891,7 @@ fn resolve_equation_stack<'a>(stack: &mut Vec<EquationDataType<'a>>) -> DataType
     if !has_explicit_scale && !has_explicit_offset {
         return DataType::Number(scale)
 
-    } else { return DataType::UDim(UDim::new(scale, offset)) }
+    } else { return DataType::UDim(UDim::new(scale as f32, offset)) }
 }
 
 fn previous_token_operator<'a>(stack: &mut Vec<EquationDataType<'a>>) -> Option<&'a Operator> {
@@ -930,7 +933,7 @@ fn parse_equation_tuple_data_type<'a>(
                         if let Some(first_operator) = first_operator.clone() {
                             stack.push(first_operator);
                         } 
-                        stack.push(EquationDataType::NumberScale(udim.scale as f32));
+                        stack.push(EquationDataType::NumberScale(udim.scale as f64));
                     }
 
                     if offset != 0 {
@@ -943,12 +946,12 @@ fn parse_equation_tuple_data_type<'a>(
                             }
                         };
 
-                        stack.push(EquationDataType::NumberOffset(udim.offset as f32));
+                        stack.push(EquationDataType::NumberOffset(udim.offset as f64));
                     }
                 },
 
                 DataType::Number(number) => {
-                    stack.push(EquationDataType::Number(number));
+                    stack.push(EquationDataType::Number(number as f64));
                 },
 
                 _ => ()
@@ -1001,6 +1004,7 @@ fn parse_equation_data_types<'a>(token: &'a Token, parser: &mut Parser<'a>, stac
 
     if let Some(result) = parse_equation_data_types(next_token, parser, stack) { return Some(result) };
 
+
     parser.position -= 1;
     let solved = resolve_equation_stack(stack);
     return Some(solved)
@@ -1017,11 +1021,12 @@ fn data_type_to_variant(data_type: &DataType) -> Variant {
         DataType::UDim2(data_type) => Variant::UDim2(*data_type),
         DataType::Vec2(data_type) => Variant::Vector2(*data_type),
         DataType::Color3(data_type) => Variant::Color3(*data_type),
-        DataType::Number(data_type) => Variant::Float32(*data_type),
+        DataType::Number(data_type) => Variant::Float32(*data_type as f32),
         DataType::NumberOffset(data_type) => Variant::UDim(UDim::new(0.0, *data_type as i32)),
-        DataType::NumberScale(data_type) => Variant::UDim(UDim::new(*data_type, 0)),
+        DataType::NumberScale(data_type) => Variant::UDim(UDim::new(*data_type as f32, 0)),
+        DataType::Font(font) => Variant::Font(font.clone()),
 
-        _ => Variant::String(format!("{:#?}", data_type))
+        _ => Variant::String(format!("{:#?}", "placeholder"))
     }
 }
 
