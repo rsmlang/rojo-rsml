@@ -3,7 +3,7 @@ use crate::arena::Arena;
 use crate::lexer::{DataType, Operator, TextType, Token};
 
 use colors_transform::{Rgb, Color};
-use rbx_types::{Color3, UDim, UDim2, Variant, Vector2};
+use rbx_types::{Color3, Font, FontStyle, FontWeight, Rect, UDim, UDim2, Variant, Vector2, Vector3};
 
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -349,6 +349,63 @@ fn tuple_to_vec2_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     DataType::Vec2(Vector2::new(component_x, component_y))
 }
 
+fn tuple_to_vec3_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
+    let component_x = if let Some(component) = tuple.get(0) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+    
+    let component_y = if let Some(component) = tuple.get(1) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+
+    let component_z = if let Some(component) = tuple.get(2) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+
+    DataType::Vec3(Vector3::new(component_x, component_y, component_z))
+}
+
+fn tuple_to_rect_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
+    let component_ax = if let Some(component) = tuple.get(0) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+    
+    let component_ay = if let Some(component) = tuple.get(1) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+
+    let component_bx = if let Some(component) = tuple.get(2) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+
+    let component_by = if let Some(component) = tuple.get(3) {
+        match component {
+            DataType::Number(number) => *number,
+            _ => 0.0
+        }
+    } else { 0.0 };
+
+    DataType::Rect(Rect::new(Vector2::new(component_ax, component_ay), Vector2::new(component_bx, component_by)))
+}
+
 fn tuple_to_udim2_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     let component_x = if let Some(component) = tuple.get(0) {
         match component {
@@ -425,6 +482,45 @@ fn tuple_to_udim_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
     DataType::UDim(udim)
 }
 
+fn tuple_to_font_data_type<'a>(tuple: &TupleDataType) -> DataType<'a> {
+    let font_name = if let Some(component) = tuple.get(0) {
+        match component {
+            DataType::StringSingle(str) => *str,
+            DataType::Number(num) => &format!("rbxasset://{}", num),
+            _ => "rbxasset://fonts/families/SourceSansPro.json"
+        }
+    } else { "rbxasset://fonts/families/SourceSansPro.json" };
+
+    let font_weight = if let Some(component) = tuple.get(0) {
+        match component {
+            DataType::StringSingle(str) => match *str {
+                "Thin" => FontWeight::Thin,
+                "ExtraLight" => FontWeight::ExtraLight,
+                "Light" => FontWeight::Light,
+                "Medium" => FontWeight::Medium,
+                "SemiBold" => FontWeight::SemiBold,
+                "Bold" => FontWeight::Bold,
+                "ExtraBold" => FontWeight::ExtraBold,
+                "Heavy" => FontWeight::Heavy,
+                _ => FontWeight::Regular
+            },
+            _ => FontWeight::Regular
+        }
+    } else { FontWeight::Regular };
+
+    let font_style = if let Some(component) = tuple.get(0) {
+        match component {
+            DataType::StringSingle(str) => match *str {
+                "Italic" => FontStyle::Italic,
+                _ => FontStyle::Normal
+            },
+            _ => FontStyle::Normal
+        }
+    } else { FontStyle::Normal };
+
+    DataType::Font(Font::new(font_name, font_weight, font_style))
+}
+
 fn parse_tuple_as_number<'a>(tuple: &TupleDataType<'a>) -> Option<DataType<'a>> {
     if tuple.data.len() != 1 { return None }
 
@@ -458,8 +554,11 @@ fn tuple_to_data_type<'a>(tuple: &TupleDataType<'a>) -> Option<DataType<'a>> {
             "udim2" => { return Some(tuple_to_udim2_data_type(tuple)) },
             "udim" => { return Some(tuple_to_udim_data_type(tuple)) },
             "vec2" => { return Some(tuple_to_vec2_data_type(tuple)) },
+            "vec3" => { return Some(tuple_to_vec3_data_type(tuple)) },
+            "rect" => { return Some(tuple_to_rect_data_type(tuple)) },
             "color3" => { return Some(tuple_to_color3_data_type(tuple)) },
             "rgb" => { return Some(tuple_to_rgb_data_type(tuple)) },
+            "font" => { return Some(tuple_to_font_data_type(tuple)) },
 
             _ => { return None }
         };

@@ -1,6 +1,6 @@
 // Modules -------------------------------------------------------------------------------------------
 use logos::Logos;
-use rbx_types::{Color3, UDim, UDim2, Vector2};
+use rbx_types::{Color3, Font, Rect, UDim, UDim2, Vector2, Vector3};
 // ---------------------------------------------------------------------------------------------------
 
 
@@ -30,7 +30,10 @@ pub enum DataType<'a> {
     UDim(UDim),
     UDim2(UDim2),
     Vec2(Vector2),
+    Rect(Rect),
+    Vec3(Vector3),
     Color3(Color3),
+    Font(Font),
     OwnedString(String)
 }
 
