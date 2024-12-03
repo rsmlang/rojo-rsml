@@ -12,8 +12,13 @@ use std::sync::LazyLock;
 
 // Globals -------------------------------------------------------------------------------------------
 const TAILWIND_COLORS: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
-    serde_json::from_slice(include_bytes!("../tailwind.json"))
-        .expect("Could not read tailwind.json file.")
+    serde_json::from_slice(include_bytes!("../tailwind_colors.json"))
+        .expect("Could not read tailwind_colors.json file.")
+});
+
+const CSS_COLORS: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
+    serde_json::from_slice(include_bytes!("../css_colors.json"))
+        .expect("Could not read css_colors.json file.")
 });
 // ---------------------------------------------------------------------------------------------------
 
@@ -1037,9 +1042,17 @@ fn parse_hex_data_type<'a>(token: &'a Token) -> Option<DataType<'a>> {
     None
 }
 
-fn parse_tailwind_data_type<'a>(token: &'a Token) -> Option<DataType<'a>> {
+fn parse_tailwind_color_data_type<'a>(token: &'a Token) -> Option<DataType<'a>> {
     if let Token::DataType(DataType::ColorTw(tailwind_color)) = token {
         return Some(parse_hex(TAILWIND_COLORS.get(tailwind_color.to_owned()).unwrap()))
+    }
+
+    None
+}
+
+fn parse_css_color_data_type<'a>(token: &'a Token) -> Option<DataType<'a>> {
+    if let Token::DataType(DataType::ColorTw(css_color)) = token {
+        return Some(parse_hex(CSS_COLORS.get(css_color.to_owned()).unwrap()))
     }
 
     None
@@ -1106,8 +1119,11 @@ fn parse_data_type<'a>(token: &'a Token, parser: &mut Parser<'a>, key: Option<&'
     } else if let Some(hex_data_type) = parse_hex_data_type(token) {
         Some(hex_data_type)
 
-    } else if let Some(tailwind_data_type) = parse_tailwind_data_type(token) {
-        Some(tailwind_data_type)
+    } else if let Some(tailwind_color_data_type) = parse_tailwind_color_data_type(token) {
+        Some(tailwind_color_data_type)
+
+    } else if let Some(css_color_data_type) = parse_css_color_data_type(token) {
+        Some(css_color_data_type)
     
     } else if let Token::DataType(data_type_value) = token {
         Some(data_type_value.to_owned())
