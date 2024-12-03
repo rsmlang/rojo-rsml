@@ -1052,7 +1052,6 @@ fn parse_tailwind_color_data_type<'a>(token: &'a Token) -> Option<DataType<'a>> 
 
 fn parse_css_color_data_type<'a>(token: &'a Token) -> Option<DataType<'a>> {
     if let Token::DataType(DataType::ColorTw(css_color)) = token {
-        println!("{:#?}", css_color);
         return Some(parse_hex(CSS_COLORS.get(css_color.to_owned()).unwrap()))
     }
 
